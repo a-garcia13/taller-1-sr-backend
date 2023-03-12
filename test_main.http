@@ -5,7 +5,66 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/hello/User
+GET http://127.0.0.1:8000/users
 Accept: application/json
 
 ###
+
+POST http://127.0.0.1:8000/users
+Content-Type: application/json
+Accept: application/json
+
+{
+    "gender": "m",
+    "age": 22,
+    "country": "Japan",
+    "registered": "Aug 13, 2006",
+    "password": "12345"
+}
+
+###
+
+GET http://127.0.0.1:8000/users/user_000001
+Accept: application/json
+
+###
+
+POST http://127.0.0.1:8000/tracks
+Content-Type: application/json
+Accept: application/json
+
+{
+    "user_id": "user_000001",
+    "artid": "a7f7df4a-77d8-4f12-8acd-5c60c93f4de8",
+    "artname": "坂本龍一",
+    "trackid": "f7c1f8f8-b935-45ed-8fc8-7def69d92a10",
+    "trackname": "The Last Emperor (Theme)"
+}
+
+###
+
+GET http://127.0.0.1:8000/tracks/640e44763dcc5245e2844ca0
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/users/{user_id}/tracks
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/tracks/artists
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/recomendation/all_tracks/user_000001
+Accept: application/json
+
+
+
+
+
+
+
+
