@@ -23,6 +23,10 @@ def get_users():
     users = user_service.get_all_users()
     return users
 
+@app.get("/tracks")
+def get_tracks():
+    tracks = track_service.get_all_tracks()
+    return tracks
 
 @app.post("/users")
 def create_user(user: UserCreate):
@@ -76,12 +80,6 @@ def delete_track(track_id: str):
 def get_user_tracks(user_id: str):
     user_tracks = track_service.get_tracks_by_user_id(user_id)
     return [TrackOut.from_orm(track) for track in user_tracks]
-
-
-@app.get("/tracks/artists")
-def get_distinct_artists():
-    artists = track_service.get_distinct_artists()
-    return artists
 
 
 @app.get("/tracks/artists/{artist}")

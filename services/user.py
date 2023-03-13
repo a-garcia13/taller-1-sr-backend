@@ -22,7 +22,6 @@ class UserService:
 
         # Increment the user_id and format it as a string with leading zeros
         user_dict['user_id'] = f"user_{int(largest_user_id + 1):06d}"
-        user_dict['registered'] = datetime.strptime(user_dict['registered'], '%b %d, %Y')
 
         result = self.collection.insert_one(user_dict)
         user_created = self.collection.find_one({"_id": ObjectId(result.inserted_id)})

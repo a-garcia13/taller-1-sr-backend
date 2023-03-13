@@ -15,11 +15,14 @@ class UserCreate(UserBase):
 
 
 class UserOut(UserBase):
-    pass
+    user_id: str
+
+    class Config:
+        orm_mode = True
 
 
 class UserInDB(UserBase):
-    pass
+    user_id: str
 
     class Config:
         orm_mode = True

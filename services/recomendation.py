@@ -13,9 +13,10 @@ from surprise import accuracy
 import random
 from bson.objectid import ObjectId
 from models.user import UserCreate, UserInDB
+from multiprocessing import Pool
 
 dump_file = "data/knn_model.pkl"
-
+load_from_file = True
 
 def art_rating(df):
     counter = 0
@@ -100,20 +101,24 @@ class RecomendationService:
         self.collection = self.db["tracks"]
 
     def load_data(self):
-        # Retrieve all documents from the collection and store them in a list
-        documents = list(self.collection.find({}, {"user_id": 1, "artname": 1, "trackname": 1}))
+        if load_from_file:
+            load_track_artista = pd.read_csv('data/df_track_artistas.csv')
+            data = load_track_artista[
+                ['#id', 'artname', 'tot_plays_usuario', 'plays_por_artista', 'n_artistas_usuario']]
+            data = data.rename(columns={'#id': 'user_id'})
+        else:
+            # Retrieve all documents from the collection and store them in a list
+            documents = list(self.collection.find({}, {"user_id": 1, "artname": 1, "trackname": 1}))
 
-        # Convert the list of documents to a pandas DataFrame
-        data = pd.DataFrame(documents, columns=["user_id", "artname", "trackname"])
-        data = data.dropna().drop_duplicates()
+            # Convert the list of documents to a pandas DataFrame
+            data = pd.DataFrame(documents, columns=["user_id", "artname", "trackname"])
+            data = data.dropna().drop_duplicates()
+            plays_por_artista, tot_plays_usuario, n_artistas_usuario = art_rating(data)
+            data['tot_plays_usuario'] = tot_plays_usuario
+            data['plays_por_artista'] = plays_por_artista
+            data['n_artistas_usuario'] = n_artistas_usuario
+            data = data[['user_id', 'artname', 'tot_plays_usuario', 'plays_por_artista', 'n_artistas_usuario']]
 
-        plays_por_artista, tot_plays_usuario, n_artistas_usuario = art_rating(data)
-
-        data['tot_plays_usuario'] = tot_plays_usuario
-        data['plays_por_artista'] = plays_por_artista
-        data['n_artistas_usuario'] = n_artistas_usuario
-
-        data = data[['user_id', 'artname', 'tot_plays_usuario', 'plays_por_artista', 'n_artistas_usuario']]
         data = data.drop_duplicates().dropna()
         data = data[(data.tot_plays_usuario >= 500) & (data.n_artistas_usuario >= 500)]
         data['peso_artista'] = data.plays_por_artista / data.n_artistas_usuario
@@ -204,20 +209,28 @@ class RecomendationService:
         model = load_model()
 
         # Get a list of all tracks in the dataset
-        tracks = self.collection.distinct("trackname")
+        pipeline = [
+            {"$group": {"_id": "$artname"}},
+            {"$project": {"artist": "$_id", "_id": 0}},
+        ]
+        artists = self.collection.aggregate(pipeline)
 
         # Make a prediction for each track in the dataset
         predictions = []
-        for track in tracks:
-            prediction = model.predict(user_id, track)
+        for artist in artists:
+            prediction = model.predict(user_id, artist["artist"])
             predictions.append(prediction)
 
         # Sort the predictions by estimated rating in descending order
         predictions.sort(key=lambda x: x.est, reverse=True)
 
-        # Return the top 10 recommended tracks for the user as a Pandas DataFrame
-        track_ratings = pd.DataFrame([(prediction.iid, prediction.est) for prediction in predictions],
-                                     columns=["track", "estimation"])
+        predictions_data = []
+        for prediction in predictions:
+            if prediction.details['was_impossible']:
+                predictions_data.append((prediction.iid, "Not available", "Not available", True))
+            else:
+                predictions_data.append((prediction.iid, prediction.est, prediction.details['actual_k'], False))
+        track_ratings = pd.DataFrame(predictions_data, columns=["artist", "estimation", "neighbors", "impossible"])
 
         return track_ratings
 

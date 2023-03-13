@@ -48,13 +48,9 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/users/{user_id}/tracks
+GET http://127.0.0.1:8000/users/user_000001/tracks
 Accept: application/json
 
-###
-
-GET http://127.0.0.1:8000/tracks/artists
-Accept: application/json
 
 ###
 

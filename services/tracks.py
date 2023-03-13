@@ -44,9 +44,6 @@ class TrackService:
         result = self.collection.delete_one({"_id": ObjectId(track_id)})
         return result.deleted_count == 1
 
-    def get_distinct_artists(self) -> List[str]:
-        return self.collection.distinct("artname")
-
     def get_tracks_by_artist(self, artist_name: str) -> List[TrackInDB]:
         track_dicts = self.collection.find({"artname": artist_name})
         tracks = []
@@ -62,3 +59,17 @@ class TrackService:
             track_dict['_id'] = str(track_dict['_id'])
             tracks.append(TrackInDB(**track_dict))
         return tracks
+
+    def get_all_tracks(self):
+        # Query for tracks and project only desired fields
+        tracks = self.collection.aggregate([
+            {'$group': {'_id': {'trackname': '$trackname', 'artname': '$artname'},
+                        'trackid': {'$first': '$trackid'},
+                        'artid': {'$first': '$artid'},
+                        'trackname': {'$first': '$trackname'},
+                        'artname': {'$first': '$artname'}}},
+            {'$project': {'_id': 0, 'trackid': 1, 'trackname': 1, 'artid': 1, 'artname': 1}}
+        ])
+
+        # Convert tracks to list and return
+        return list(tracks)

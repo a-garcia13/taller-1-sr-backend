@@ -22,9 +22,8 @@ class TrackCreate(TrackBase):
 class TrackInDB(TrackBase):
     trackid: str
 
-
-class Config:
-    orm_mode = True
+    class Config:
+        orm_mode = True
 
 
 class TrackUpdate(BaseModel):
@@ -38,6 +37,12 @@ class TrackUpdate(BaseModel):
 class Track(TrackInDB):
     pass
 
+    class Config:
+        orm_mode = True
+
 
 class TrackOut(Track):
-    estimation: float
+    pass
+
+    class Config:
+        orm_mode = True
